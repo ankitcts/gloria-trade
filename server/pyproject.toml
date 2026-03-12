@@ -17,6 +17,7 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
     "pydantic[email]>=2.9.0",
+    "pydantic-settings>=2.6.0",
 
     # Data
     "yfinance>=0.2.40",
@@ -24,7 +25,7 @@ dependencies = [
     "numpy>=1.26.0",
 
     # ML/AI
-    "torch>=2.4.0",
+    "torch>=2.2.0",
     "scikit-learn>=1.5.0",
     "scipy>=1.14.0",
 

@@ -19,7 +19,7 @@ class ActionType(str, Enum):
 
 class CorporateAction(Document):
     security_id: Indexed(str)
-    action_type: Indexed(ActionType)
+    action_type: ActionType
 
     announcement_date: Optional[date] = None
     ex_date: Optional[Indexed(date)] = None

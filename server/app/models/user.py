@@ -117,7 +117,7 @@ class User(Document):
     extra_permissions: list[Permission] = Field(default_factory=list)
 
     # Status
-    account_status: Indexed(AccountStatus) = AccountStatus.PENDING_VERIFICATION
+    account_status: AccountStatus = AccountStatus.PENDING_VERIFICATION
     kyc: KYCDetail = Field(default_factory=KYCDetail)
     email_verified: bool = False
     phone_verified: bool = False

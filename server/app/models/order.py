@@ -64,7 +64,7 @@ class Order(Document):
     validity: OrderValidity = OrderValidity.DAY
     valid_until: Optional[datetime] = None
 
-    status: Indexed(OrderStatus) = OrderStatus.PENDING
+    status: OrderStatus = OrderStatus.PENDING
 
     fills: list[FillRecord] = Field(default_factory=list)
 

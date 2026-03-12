@@ -28,7 +28,7 @@ class SentimentRecord(Document):
     security_id: Optional[Indexed(str)] = None
     symbol: Optional[str] = None
 
-    source_type: Indexed(SentimentSource)
+    source_type: SentimentSource
     source_name: Optional[str] = None
     source_url: Optional[str] = None
 

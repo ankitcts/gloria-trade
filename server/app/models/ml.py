@@ -28,7 +28,7 @@ class MLModel(Document):
     name: Indexed(str)
     model_type: ModelType
     version: str
-    status: Indexed(ModelStatus)
+    status: ModelStatus
 
     target_security_id: Optional[str] = None
     target_description: str
