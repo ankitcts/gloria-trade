@@ -10,6 +10,7 @@ from app.securities.router import router as securities_router
 from app.predictions.router import router as predictions_router
 from app.trading.router import router as trading_router
 from app.portfolio.router import router as portfolio_router
+from app.admin.router import router as admin_router
 from app.trading.service import stream_simulation, ws_manager
 
 
@@ -41,6 +42,7 @@ app.include_router(securities_router, prefix="/api/v1/securities", tags=["securi
 app.include_router(predictions_router, prefix="/api/v1/predictions", tags=["predictions"])
 app.include_router(trading_router, prefix="/api/v1/trading", tags=["trading"])
 app.include_router(portfolio_router, prefix="/api/v1/portfolio", tags=["portfolio"])
+app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
 
 
 @app.get("/api/v1/health")

@@ -115,6 +115,7 @@ class User(Document):
     # Access Control
     role: UserRole = UserRole.VIEWER
     extra_permissions: list[Permission] = Field(default_factory=list)
+    group_ids: list[str] = Field(default_factory=list)
 
     # Status
     account_status: AccountStatus = AccountStatus.PENDING_VERIFICATION

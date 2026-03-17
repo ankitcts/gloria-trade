@@ -16,6 +16,7 @@ import Predictions from "@/pages/Predictions";
 import Trading from "@/pages/Trading";
 import Portfolio from "@/pages/Portfolio";
 import Notifications from "@/pages/Notifications";
+import Admin from "@/pages/Admin";
 
 function App() {
   const mode = useThemeStore((s) => s.mode);
@@ -128,6 +129,7 @@ function App() {
             <Route path="/trading" element={<Trading />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/admin" element={<Admin />} />
           </Route>
         </Route>
       </Routes>

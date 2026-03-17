@@ -1,11 +1,13 @@
 from typing import Annotated
 
+from beanie import PydanticObjectId
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from app.config import settings
 from app.models.user import Permission, ROLE_PERMISSIONS, User, UserRole
+from app.models.group import UserGroup
 
 bearer_scheme = HTTPBearer()
 
@@ -56,15 +58,25 @@ def require_role(required_role: UserRole):
     return _check_role
 
 
+async def _resolve_permissions(user: User) -> set[Permission]:
+    """Collect all permissions: role-based + extra + group-granted."""
+    perms = set(ROLE_PERMISSIONS.get(user.role, []))
+    perms.update(user.extra_permissions)
+    if user.group_ids:
+        oids = [PydanticObjectId(gid) for gid in user.group_ids]
+        groups = await UserGroup.find({"_id": {"$in": oids}}).to_list()
+        for g in groups:
+            perms.update(g.permissions)
+    return perms
+
+
 def require_permission(required_permission: Permission):
     """Return a dependency that ensures the current user holds the specified permission."""
 
     async def _check_permission(
         current_user: Annotated[User, Depends(get_current_user)],
     ) -> User:
-        # Collect role-based permissions plus any extra user-level grants
-        user_permissions = set(ROLE_PERMISSIONS.get(current_user.role, []))
-        user_permissions.update(current_user.extra_permissions)
+        user_permissions = await _resolve_permissions(current_user)
 
         if required_permission not in user_permissions:
             raise HTTPException(

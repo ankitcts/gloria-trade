@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  Dashboard as DashboardIcon,
   ShowChart as SecuritiesIcon,
   Psychology as PredictionsIcon,
   SwapHoriz as TradingIcon,
@@ -29,18 +28,22 @@ import {
   Brightness7 as LightModeIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
 } from "@mui/icons-material";
+import GloriaFlameIcon from "@/components/icons/GloriaFlameIcon";
 import { useAuthStore } from "@/stores/authStore";
 import { useThemeStore } from "@/stores/themeStore";
+import { useMe } from "@/api/hooks/useAuth";
 
 const DRAWER_WIDTH = 260;
 
 const NAV_ITEMS = [
-  { label: "Dashboard", path: "/", icon: <DashboardIcon /> },
+  { label: "Dashboard", path: "/", icon: <GloriaFlameIcon /> },
   { label: "Securities", path: "/securities", icon: <SecuritiesIcon /> },
   { label: "Predictions", path: "/predictions", icon: <PredictionsIcon /> },
   { label: "Trading", path: "/trading", icon: <TradingIcon /> },
   { label: "Portfolio", path: "/portfolio", icon: <PortfolioIcon /> },
+  { label: "Admin", path: "/admin", icon: <AdminPanelSettingsIcon />, adminOnly: true },
   {
     label: "Notifications",
     path: "/notifications",
@@ -56,6 +59,9 @@ export default function AppShell() {
   const logout = useAuthStore((s) => s.logout);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const themeMode = useThemeStore((s) => s.mode);
+
+  // Fetch user profile (populates role, permissions, etc. in the store)
+  useMe();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -91,12 +97,9 @@ export default function AppShell() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontWeight: 800,
-            fontSize: "1.1rem",
-            color: "#000",
           }}
         >
-          GT
+          <GloriaFlameIcon sx={{ fontSize: 24, color: "#000" }} />
         </Box>
         <Typography
           variant="h6"
@@ -116,7 +119,13 @@ export default function AppShell() {
 
       {/* Navigation */}
       <List sx={{ flex: 1, px: 1.5, pt: 1.5 }}>
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => {
+          if (!("adminOnly" in item) || !item.adminOnly) return true;
+          return (
+            user?.role === "admin" ||
+            user?.extra_permissions?.includes("admin:users")
+          );
+        }).map((item) => {
           const isActive =
             item.path === "/"
               ? location.pathname === "/"
@@ -166,13 +175,13 @@ export default function AppShell() {
             fontSize: "0.85rem",
           }}
         >
-          {user?.first_name?.[0] || user?.username?.[0] || "U"}
+          {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
         </Avatar>
         <Box sx={{ overflow: "hidden" }}>
           <Typography variant="body2" fontWeight={600} noWrap>
             {user?.first_name
               ? `${user.first_name} ${user.last_name}`
-              : user?.username || "User"}
+              : user?.email || "User"}
           </Typography>
           <Typography
             variant="caption"
@@ -242,7 +251,9 @@ export default function AppShell() {
                 <PersonIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText>
-                {user?.username || "Profile"}
+                {user?.first_name
+                  ? `${user.first_name} ${user.last_name}`
+                  : user?.email || "Profile"}
               </ListItemText>
             </MenuItem>
             <Divider />
@@ -281,6 +292,8 @@ export default function AppShell() {
         variant="permanent"
         sx={{
           display: { xs: "none", md: "block" },
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
             width: DRAWER_WIDTH,
@@ -299,7 +312,7 @@ export default function AppShell() {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          width: { xs: "100%", md: `calc(100% - ${DRAWER_WIDTH}px)` },
           mt: "64px",
           p: 3,
           overflow: "auto",

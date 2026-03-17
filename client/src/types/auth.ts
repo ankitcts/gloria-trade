@@ -1,13 +1,44 @@
 export interface User {
   id: string;
   email: string;
-  username: string;
   first_name: string;
   last_name: string;
-  is_active: boolean;
-  is_verified: boolean;
+  role: string;
+  account_status: string;
+  group_ids: string[];
+  extra_permissions: string[];
+  email_verified: boolean;
+  phone_verified: boolean;
+  last_login_at: string | null;
+  login_count: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface AdminUserDetail extends User {
+  phone: string | null;
+  display_name: string | null;
+  timezone: string;
+  preferred_locale: string;
+}
+
+export interface UserGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  permissions: string[];
+  member_ids: string[];
+  member_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 export interface LoginRequest {

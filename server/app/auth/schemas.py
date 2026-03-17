@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.models.user import AccountStatus, UserRole
+from app.models.user import AccountStatus, Permission, UserRole
 
 
 # ── Request schemas ──────────────────────────────────────────────────────────
@@ -47,6 +47,8 @@ class UserResponse(BaseModel):
     timezone: str
     preferred_locale: str
     role: UserRole
+    extra_permissions: list[Permission] = []
+    group_ids: list[str] = []
     account_status: AccountStatus
     email_verified: bool
     phone_verified: bool
@@ -69,6 +71,8 @@ class UserResponse(BaseModel):
             timezone=user.timezone,
             preferred_locale=user.preferred_locale,
             role=user.role,
+            extra_permissions=user.extra_permissions,
+            group_ids=[str(gid) for gid in user.group_ids],
             account_status=user.account_status,
             email_verified=user.email_verified,
             phone_verified=user.phone_verified,

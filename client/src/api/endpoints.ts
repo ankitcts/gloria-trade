@@ -46,4 +46,18 @@ export const ENDPOINTS = {
     MARK_READ: (id: string) => `/notifications/${id}/read`,
     MARK_ALL_READ: "/notifications/read-all",
   },
+
+  // Admin
+  ADMIN: {
+    USERS: "/admin",
+    USER_DETAIL: (id: string) => `/admin/${id}`,
+    USER_ROLE: (id: string) => `/admin/${id}/role`,
+    USER_STATUS: (id: string) => `/admin/${id}/status`,
+    USER_PERMISSIONS: (id: string) => `/admin/${id}/permissions`,
+    USER_GROUPS: (id: string) => `/admin/${id}/groups`,
+    GROUPS: "/admin/groups",
+    GROUP_DETAIL: (id: string) => `/admin/groups/${id}`,
+    GROUP_MEMBERS: (id: string) => `/admin/groups/${id}/members`,
+    PERMISSIONS: "/admin/permissions",
+  },
 } as const;
