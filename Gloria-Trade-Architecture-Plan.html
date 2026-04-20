@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gloria Trade - Architecture & Development Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --primary: #2962FF;
+    --primary-dark: #0039CB;
+    --accent: #00E676;
+    --accent-2: #FFD740;
+    --bg-dark: #131722;
+    --bg-card: #1E222D;
+    --bg-code: #161A25;
+    --text: #D1D4DC;
+    --text-muted: #787B86;
+    --border: #2A2E39;
+    --success: #26A69A;
+    --warning: #FFD740;
+    --danger: #EF5350;
+    --buy: #26A69A;
+    --sell: #EF5350;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  @media print {
+    body { background: white; color: #131722; font-size: 11px; line-height: 1.5; }
+    .cover-page { page-break-after: always; background: var(--bg-dark) !important; color: white !important; }
+    .section { page-break-inside: avoid; }
+    .no-print { display: none; }
+    table { font-size: 10px; }
+    pre { font-size: 9px; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 18px; }
+    h3 { font-size: 14px; }
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+
+  /* Cover Page */
+  .cover-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #131722 0%, #1E222D 40%, #0D2137 70%, #0A1628 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-page::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(41,98,255,0.12) 0%, transparent 70%);
+    top: -100px; right: -200px;
+  }
+  .cover-page::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,230,118,0.08) 0%, transparent 70%);
+    bottom: -100px; left: -100px;
+  }
+  .cover-logo {
+    width: 120px; height: 120px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 42px; font-weight: 900; color: white;
+    margin-bottom: 40px;
+    box-shadow: 0 20px 60px rgba(41,98,255,0.4);
+    position: relative; z-index: 1;
+    letter-spacing: -1px;
+  }
+  .cover-title {
+    font-size: 56px; font-weight: 900;
+    background: linear-gradient(135deg, #fff, #D1D4DC);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 16px; position: relative; z-index: 1;
+  }
+  .cover-subtitle {
+    font-size: 22px; color: var(--text-muted); font-weight: 300;
+    margin-bottom: 60px; position: relative; z-index: 1;
+  }
+  .cover-meta {
+    position: relative; z-index: 1;
+    display: flex; gap: 40px; color: var(--text-muted); font-size: 13px;
+  }
+  .cover-meta span { display: flex; align-items: center; gap: 8px; }
+
+  /* Ticker tape */
+  .ticker-tape {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(30,34,45,0.9);
+    border-top: 1px solid var(--border);
+    padding: 10px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    z-index: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .ticker-tape .ticker-content {
+    display: inline-block;
+    animation: ticker 30s linear infinite;
+  }
+  .ticker-tape .ticker-content span { margin-right: 40px; }
+  .ticker-green { color: var(--buy); }
+  .ticker-red { color: var(--sell); }
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* TOC */
+  .toc {
+    padding: 60px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc h2 { margin-bottom: 30px; }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(42,46,57,0.5);
+    display: flex; justify-content: space-between;
+  }
+  .toc-list li a { color: var(--accent); text-decoration: none; }
+  .toc-list li a:hover { text-decoration: underline; }
+  .toc-num { color: var(--primary); font-weight: 600; margin-right: 12px; }
+
+  /* Sections */
+  .section { padding: 50px 0; border-bottom: 1px solid var(--border); }
+
+  h1 {
+    font-size: 32px; font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  h2 {
+    font-size: 24px; font-weight: 700; color: var(--text);
+    margin-bottom: 20px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary);
+    display: inline-block;
+  }
+  h3 {
+    font-size: 18px; font-weight: 600; color: var(--accent);
+    margin: 25px 0 12px;
+  }
+  h4 {
+    font-size: 15px; font-weight: 600; color: var(--accent-2);
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 14px; color: var(--text-muted); }
+  strong { color: var(--text); font-weight: 600; }
+  ul, ol { margin: 10px 0 16px 24px; color: var(--text-muted); }
+  li { margin-bottom: 6px; }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .card-sm {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .card-sm h4 { margin-top: 0; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .tag-primary { background: rgba(41,98,255,0.2); color: var(--primary); }
+  .tag-accent { background: rgba(0,230,118,0.2); color: var(--accent); }
+  .tag-yellow { background: rgba(255,215,64,0.2); color: var(--accent-2); }
+  .tag-success { background: rgba(38,166,154,0.2); color: var(--success); }
+  .tag-warning { background: rgba(255,215,64,0.2); color: var(--warning); }
+  .tag-danger { background: rgba(239,83,80,0.2); color: var(--danger); }
+  .tag-get { background: rgba(0,230,118,0.15); color: var(--accent); }
+  .tag-post { background: rgba(41,98,255,0.15); color: var(--primary); }
+  .tag-put { background: rgba(255,215,64,0.15); color: var(--accent-2); }
+  .tag-patch { background: rgba(38,166,154,0.15); color: var(--success); }
+  .tag-delete { background: rgba(239,83,80,0.15); color: var(--danger); }
+  .tag-ws { background: rgba(156,39,176,0.15); color: #CE93D8; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  th {
+    background: var(--bg-code);
+    color: var(--accent);
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--primary);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  tr:hover td { background: rgba(41,98,255,0.05); }
+
+  /* Code */
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 14px 0;
+    color: #A9B7C6;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-code);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  /* Diagram */
+  .diagram {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: pre;
+    overflow-x: auto;
+    color: #A9B7C6;
+  }
+
+  /* Phase timeline */
+  .phase {
+    display: flex;
+    gap: 20px;
+    margin: 16px 0;
+    padding: 20px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+  }
+  .phase-num {
+    min-width: 48px; height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: white;
+    flex-shrink: 0;
+  }
+  .phase-content { flex: 1; }
+  .phase-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .phase-time { font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 8px; }
+
+  /* Alert boxes */
+  .alert {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .alert-info { background: rgba(41,98,255,0.1); border-left: 4px solid var(--primary); }
+  .alert-success { background: rgba(38,166,154,0.1); border-left: 4px solid var(--success); }
+  .alert-warning { background: rgba(255,215,64,0.1); border-left: 4px solid var(--warning); }
+  .alert-danger { background: rgba(239,83,80,0.1); border-left: 4px solid var(--danger); }
+
+  /* Print button */
+  .print-btn {
+    position: fixed; bottom: 30px; right: 30px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white; border: none; padding: 14px 28px;
+    border-radius: 50px; font-size: 14px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 8px 30px rgba(41,98,255,0.4);
+    z-index: 100;
+    transition: transform 0.2s;
+  }
+  .print-btn:hover { transform: scale(1.05); }
+
+  /* Platform badges */
+  .platforms-bar {
+    display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0;
+  }
+  .platform-badge {
+    padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1px solid;
+  }
+  .pb-react { border-color: #61DAFB; color: #61DAFB; background: rgba(97,218,251,0.1); }
+  .pb-angular { border-color: #DD0031; color: #DD0031; background: rgba(221,0,49,0.1); }
+  .pb-fastapi { border-color: #009688; color: #009688; background: rgba(0,150,136,0.1); }
+  .pb-mongo { border-color: #00ED64; color: #00ED64; background: rgba(0,237,100,0.1); }
+  .pb-aws { border-color: #FF9900; color: #FF9900; background: rgba(255,153,0,0.1); }
+
+  /* Market indicator */
+  .market-indicator {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 4px; font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .mi-buy { background: rgba(38,166,154,0.15); color: var(--buy); }
+  .mi-sell { background: rgba(239,83,80,0.15); color: var(--sell); }
+</style>
+</head>
+<body>
+
+<!-- Print Button -->
+<button class="print-btn no-print" onclick="window.print()">Save as PDF</button>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover-page">
+  <div class="cover-logo">GT</div>
+  <h1 class="cover-title">Gloria Trade</h1>
+  <p class="cover-subtitle">AI-Powered Securities Trading Platform<br>Architecture & Development Plan</p>
+  <div class="cover-meta">
+    <span>Version 1.0</span>
+    <span>March 2026</span>
+    <span>Full-Stack Web</span>
+    <span>Confidential</span>
+  </div>
+  <div class="ticker-tape no-print">
+    <div class="ticker-content">
+      <span class="ticker-green">AAPL 198.42 +2.31%</span>
+      <span class="ticker-red">TSLA 171.20 -1.45%</span>
+      <span class="ticker-green">MSFT 432.18 +0.89%</span>
+      <span class="ticker-green">NVDA 892.50 +3.12%</span>
+      <span class="ticker-red">AMZN 186.30 -0.67%</span>
+      <span class="ticker-green">GOOGL 158.74 +1.23%</span>
+      <span class="ticker-red">META 505.10 -0.38%</span>
+      <span class="ticker-green">JPM 198.85 +1.05%</span>
+      <span class="ticker-green">AAPL 198.42 +2.31%</span>
+      <span class="ticker-red">TSLA 171.20 -1.45%</span>
+      <span class="ticker-green">MSFT 432.18 +0.89%</span>
+      <span class="ticker-green">NVDA 892.50 +3.12%</span>
+      <span class="ticker-red">AMZN 186.30 -0.67%</span>
+      <span class="ticker-green">GOOGL 158.74 +1.23%</span>
+      <span class="ticker-red">META 505.10 -0.38%</span>
+      <span class="ticker-green">JPM 198.85 +1.05%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="container">
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol class="toc-list">
+    <li><span><span class="toc-num">01</span> Executive Summary & Project Scope</span></li>
+    <li><span><span class="toc-num">02</span> System Architecture Overview</span></li>
+    <li><span><span class="toc-num">03</span> Tech Stack</span></li>
+    <li><span><span class="toc-num">04</span> Project Structure</span></li>
+    <li><span><span class="toc-num">05</span> Data Model Design</span></li>
+    <li><span><span class="toc-num">06</span> API Design</span></li>
+    <li><span><span class="toc-num">07</span> Real-Time Trading Engine</span></li>
+    <li><span><span class="toc-num">08</span> ML Predictions Pipeline</span></li>
+    <li><span><span class="toc-num">09</span> Authentication & Security</span></li>
+    <li><span><span class="toc-num">10</span> Frontend Architecture</span></li>
+    <li><span><span class="toc-num">11</span> Migration Strategy: Angular to React</span></li>
+    <li><span><span class="toc-num">12</span> CI/CD & Deployment Strategy</span></li>
+    <li><span><span class="toc-num">13</span> Prerequisites for Deployment</span></li>
+    <li><span><span class="toc-num">14</span> Implementation Roadmap</span></li>
+    <li><span><span class="toc-num">15</span> Key Architectural Decisions</span></li>
+  </ol>
+</div>
+
+<!-- ==================== SECTION 1: EXECUTIVE SUMMARY ==================== -->
+<div class="section" id="s1">
+  <h1>01</h1>
+  <h2>Executive Summary & Project Scope</h2>
+
+  <p><strong>Gloria Trade</strong> is a full-stack, AI-powered securities trading platform that enables users to browse stock market securities, execute simulated trades, manage portfolios, and receive ML-driven price predictions. The platform features real-time WebSocket price streaming, interactive candlestick charts, and a comprehensive admin panel for user management.</p>
+
+  <div class="alert alert-info">
+    <strong>Platform Strategy:</strong> Initially built as an Angular 19 application (production-ready), now being migrated to React 19 for long-term maintainability. Both share the same FastAPI + MongoDB backend.
+  </div>
+
+  <h3>Target Platforms</h3>
+  <div class="platforms-bar">
+    <span class="platform-badge pb-react">React 19 (Primary)</span>
+    <span class="platform-badge pb-angular">Angular 19 (Legacy)</span>
+    <span class="platform-badge pb-fastapi">FastAPI (Backend)</span>
+    <span class="platform-badge pb-mongo">MongoDB Atlas</span>
+    <span class="platform-badge pb-aws">AWS EC2 (Deployment)</span>
+  </div>
+
+  <h3>Core Features</h3>
+  <div class="card-grid">
+    <div class="card-sm">
+      <h4>Securities Browser</h4>
+      <p>Searchable, filterable list of NASDAQ securities with real-time quotes, interactive candlestick charts (Lightweight Charts), fundamentals cards, and risk badges.</p>
+    </div>
+    <div class="card-sm">
+      <h4>Simulated Trading</h4>
+      <p>Place buy/sell orders with market/limit types. Real-time order fill simulation via WebSocket. Full order lifecycle: placed, partial fill, filled, cancelled.</p>
+    </div>
+    <div class="card-sm">
+      <h4>Portfolio Management</h4>
+      <p>Track holdings with real-time P&L calculation. Transaction history, portfolio summary cards, and per-holding detail views with cost basis analysis.</p>
+    </div>
+    <div class="card-sm">
+      <h4>ML Price Predictions</h4>
+      <p>PyTorch and scikit-learn models generate price forecasts, trading signals (buy/hold/sell), risk metrics, and confidence scores for each security.</p>
+    </div>
+    <div class="card-sm">
+      <h4>Dashboard & Analytics</h4>
+      <p>Summary cards for portfolio value, daily P&L, top movers. Recent orders feed, top securities by volume, and quick-action shortcuts.</p>
+    </div>
+    <div class="card-sm">
+      <h4>Admin Panel</h4>
+      <p>User management with CRUD, role assignment (admin/trader/viewer), status management, and group-based permission controls.</p>
+    </div>
+  </div>
+
+  <h3>Key Modules</h3>
+  <table>
+    <tr><th>Module</th><th>Purpose</th><th>Backend Service</th></tr>
+    <tr><td>Auth</td><td>JWT login/register, token refresh, OTP verification</td><td>auth/</td></tr>
+    <tr><td>Securities</td><td>Stock list, search, detail, price history (yfinance)</td><td>securities/</td></tr>
+    <tr><td>Trading</td><td>Order CRUD, fill simulation, WebSocket streaming</td><td>trading/</td></tr>
+    <tr><td>Portfolio</td><td>Holdings, transactions, P&L tracking</td><td>portfolio/</td></tr>
+    <tr><td>Predictions</td><td>ML signals, risk metrics, price forecasts</td><td>predictions/</td></tr>
+    <tr><td>Watchlist</td><td>User-curated lists with price alerts</td><td>watchlists/</td></tr>
+    <tr><td>Notifications</td><td>Alert list, read/unread, push-style messages</td><td>notifications/</td></tr>
+    <tr><td>Admin</td><td>User management, roles, groups</td><td>admin/</td></tr>
+  </table>
+</div>
+
+<!-- ==================== SECTION 2: SYSTEM ARCHITECTURE ==================== -->
+<div class="section" id="s2">
+  <h1>02</h1>
+  <h2>System Architecture Overview</h2>
+
+  <div class="diagram">
+                          +------------------------------------------+
+                          |            CDN / Edge Layer               |
+                          |       (CloudFront / Vercel Edge)          |
+                          +----------+-------------------------------+
+                                     |
+        +----------------------------+----------------------------+
+        |                                                         |
++-------v-----------+                                   +---------v---------+
+|  React 19 App     |                                   |  Angular 19 App   |
+|  (Primary)        |                                   |  (Legacy)         |
+|  Vite + MUI v6    |                                   |  Angular Material |
+|  Zustand + RQ     |                                   |  Signals + RxJS   |
++-------+-----------+                                   +---------+---------+
+        |                                                         |
+        +----------------------------+----------------------------+
+                                     |
+                          +----------v-----------+
+                          |   Nginx Reverse Proxy |
+                          |   (SSL Termination)   |
+                          +----------+-----------+
+                                     |
+                          +----------v-----------+
+                          |     FastAPI Server    |
+                          |    (Python 3.12+)     |
+                          |  Uvicorn + Gunicorn   |
+                          +--+---+---+---+---+--+
+                             |   |   |   |   |
+          +------------------+   |   |   |   +------------------+
+          |                      |   |   |                      |
++---------v------+  +------------v---v---v-----------+  +-------v----------+
+|  Auth Service  |  |  Core Trading Services         |  |  ML Pipeline     |
+|  JWT + OTP     |  |  Securities + Trading +        |  |  PyTorch         |
+|  bcrypt hash   |  |  Portfolio + Watchlist          |  |  scikit-learn    |
+|  Refresh token |  |  WebSocket price streaming      |  |  Price forecasts |
++----------------+  +--------------------------------+  |  Risk metrics    |
+                             |                          +------------------+
+                             |
+                  +----------v-----------+
+                  |     Data Layer        |
+                  |  MongoDB Atlas (M10)  |
+                  |  Beanie ODM + Motor   |
+                  |  14 Document Models   |
+                  +----------------------+
+                             |
+                  +----------v-----------+
+                  |  External Services    |
+                  |  yfinance (market     |
+                  |    data feed)         |
+                  |  Email (OTP delivery) |
+                  +----------------------+
+  </div>
+
+  <h3>Key Architectural Principles</h3>
+  <ul>
+    <li><strong>Modular monolith:</strong> All backend services live in one FastAPI application as separate router modules. Each module (auth, securities, trading, etc.) has its own router, service, and dependencies -- cleanly separable if microservices are needed later.</li>
+    <li><strong>Shared data layer:</strong> All services share a single MongoDB Atlas cluster via Beanie ODM with Motor async driver.</li>
+    <li><strong>Real-time via WebSocket:</strong> Trading simulation streams live price updates and order fills via FastAPI WebSocket endpoints.</li>
+    <li><strong>Dual frontend support:</strong> Both Angular 19 (production-complete) and React 19 (in migration) consume the same API. The backend is frontend-agnostic.</li>
+    <li><strong>ML as a service:</strong> Predictions pipeline runs alongside the API, using PyTorch and scikit-learn models stored in MongoDB.</li>
+    <li><strong>Security-first auth:</strong> JWT access + refresh tokens, bcrypt password hashing, OTP verification for sensitive operations.</li>
+  </ul>
+</div>
+
+<!-- ==================== SECTION 3: TECH STACK ==================== -->
+<div class="section" id="s3">
+  <h1>03</h1>
+  <h2>Tech Stack</h2>
+
+  <h3>React Frontend (Primary - In Migration)</h3>
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Version</th></tr>
+    <tr><td>Framework</td><td>React + Vite</td><td>React 19, Vite 6</td></tr>
+    <tr><td>Language</td><td>TypeScript (strict mode)</td><td>5.x</td></tr>
+    <tr><td>State (Client)</td><td>Zustand</td><td>5.x</td></tr>
+    <tr><td>State (Server)</td><td>TanStack React Query</td><td>v5</td></tr>
+    <tr><td>HTTP Client</td><td>Axios (with interceptors)</td><td>1.x</td></tr>
+    <tr><td>UI Library</td><td>MUI (Material UI)</td><td>v6</td></tr>
+    <tr><td>Icons</td><td>MUI Icons</td><td>v6</td></tr>
+    <tr><td>CSS-in-JS</td><td>Emotion (MUI default)</td><td>Latest</td></tr>
+    <tr><td>Routing</td><td>React Router DOM</td><td>v7</td></tr>
+    <tr><td>Forms</td><td>React Hook Form</td><td>Latest</td></tr>
+    <tr><td>Charts (Candlestick)</td><td>Lightweight Charts (TradingView)</td><td>v4</td></tr>
+    <tr><td>Charts (Analytics)</td><td>Recharts</td><td>Latest</td></tr>
+    <tr><td>Testing</td><td>Vitest + React Testing Library</td><td>Latest</td></tr>
+  </table>
+
+  <h3>Angular Frontend (Legacy - Production Complete)</h3>
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Version</th></tr>
+    <tr><td>Framework</td><td>Angular (standalone components)</td><td>v19</td></tr>
+    <tr><td>Build</td><td>Vite (Angular 19+ default)</td><td>Latest</td></tr>
+    <tr><td>State</td><td>Angular Signals (per-service)</td><td>Built-in</td></tr>
+    <tr><td>HTTP</td><td>HttpClient + functional interceptors</td><td>Built-in</td></tr>
+    <tr><td>UI Library</td><td>Angular Material</td><td>v19</td></tr>
+    <tr><td>Routing</td><td>Angular Router (lazy-loaded)</td><td>Built-in</td></tr>
+    <tr><td>Charts</td><td>Lightweight Charts + Chart.js</td><td>v5 / Latest</td></tr>
+    <tr><td>Auth</td><td>Functional guards + OTP dialog</td><td>Built-in</td></tr>
+    <tr><td>Theme</td><td>TradingView-inspired dark (#131722)</td><td>CSS Variables</td></tr>
+  </table>
+
+  <h3>Backend</h3>
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+    <tr><td>API Framework</td><td>FastAPI (Python 3.12+)</td><td>REST + WebSocket endpoints</td></tr>
+    <tr><td>ODM</td><td>Beanie + Motor</td><td>Async MongoDB ODM</td></tr>
+    <tr><td>Database</td><td>MongoDB Atlas (M10)</td><td>Primary data store (14 collections)</td></tr>
+    <tr><td>Auth</td><td>PyJWT + Passlib (bcrypt)</td><td>JWT tokens + password hashing</td></tr>
+    <tr><td>Market Data</td><td>yfinance</td><td>Historical stock data (NASDAQ)</td></tr>
+    <tr><td>ML Framework</td><td>PyTorch + scikit-learn</td><td>Price prediction models</td></tr>
+    <tr><td>Scientific</td><td>NumPy + SciPy</td><td>Statistical analysis</td></tr>
+    <tr><td>WebSocket</td><td>FastAPI WebSocket</td><td>Real-time trading simulation</td></tr>
+    <tr><td>Email</td><td>SMTP / Email service</td><td>OTP delivery, welcome emails</td></tr>
+    <tr><td>Containerization</td><td>Docker + Docker Compose</td><td>MongoDB 7 local dev + deploy</td></tr>
+  </table>
+</div>
+
+<!-- ==================== SECTION 4: PROJECT STRUCTURE ==================== -->
+<div class="section" id="s4">
+  <h1>04</h1>
+  <h2>Project Structure</h2>
+
+  <h3>React Application (gloria-trade)</h3>
+  <pre>
+gloria-trade/
+├── client/                             # React 19 + Vite frontend
+│   ├── package.json                    # React 19, MUI v6, Zustand, React Query
+│   ├── vite.config.ts                  # Path alias @/, port 3000, API proxy to :9000
+│   ├── tsconfig.json                   # Strict TypeScript config
+│   ├── index.html                      # SPA entry point
+│   └── src/
+│       ├── main.tsx                    # React 19 createRoot entry
+│       ├── App.tsx                     # Theme provider + routing setup
+│       │
+│       ├── api/                        # API integration layer
+│       │   ├── client.ts              # Axios instance with JWT interceptors
+│       │   ├── endpoints.ts           # API route constants (/api/v1/...)
+│       │   └── hooks/                 # React Query hooks per domain
+│       │       ├── useAuth.ts         # login, register, refresh, me
+│       │       ├── useSecurities.ts   # list, search, detail, history
+│       │       ├── useTrading.ts      # orders CRUD, cancel
+│       │       ├── usePortfolio.ts    # holdings, transactions, summary
+│       │       ├── usePredictions.ts  # signals, forecasts, risk
+│       │       └── useAdmin.ts        # user management CRUD
+│       │
+│       ├── stores/                     # Zustand client state
+│       │   ├── authStore.ts           # User, tokens, login/logout
+│       │   └── themeStore.ts          # Dark/light mode preference
+│       │
+│       ├── pages/                      # Feature pages (lazy-loaded)
+│       │   ├── Auth/                  # LoginPage, RegisterPage
+│       │   ├── Dashboard/             # DashboardPage (summary + widgets)
+│       │   ├── Securities/            # SecuritiesListPage, SecurityDetailPage
+│       │   ├── Trading/               # TradingPage (orders + history)
+│       │   ├── Portfolio/             # PortfolioPage (holdings + P&L)
+│       │   ├── Predictions/           # PredictionsPage (ML signals grid)
+│       │   ├── Notifications/         # NotificationsPage (alerts)
+│       │   └── Admin/                 # AdminPage (user management)
+│       │
+│       ├── components/                 # Reusable components
+│       │   ├── layout/               # AppShell, Header, Sidebar, Nav
+│       │   ├── common/               # ProtectedRoute, LoadingSpinner
+│       │   ├── charts/               # CandlestickChart, LineChart wrappers
+│       │   └── icons/                # Custom trading icons
+│       │
+│       ├── types/                      # TypeScript interfaces
+│       │   ├── auth.ts               # User, LoginRequest, TokenResponse
+│       │   ├── security.ts           # Security, Quote, PriceHistory
+│       │   ├── trading.ts            # Order, OrderType, OrderStatus, Fill
+│       │   ├── portfolio.ts          # Portfolio, Holding, Transaction
+│       │   └── index.ts              # Re-exports
+│       │
+│       ├── hooks/                      # Custom React hooks
+│       ├── styles/                     # Global styles, theme config
+│       └── utils/                      # Formatters, validators, constants
+│
+├── server/                             # FastAPI backend
+│   ├── pyproject.toml                  # Python dependencies
+│   ├── Dockerfile                      # Production container
+│   └── app/
+│       ├── main.py                    # FastAPI app, CORS, routers, lifespan
+│       ├── config.py                  # Pydantic Settings (JWT, DB, CORS)
+│       ├── database.py                # Beanie + Motor init/close
+│       │
+│       ├── models/                    # 14 Beanie Document models
+│       │   ├── user.py               # User, roles, permissions
+│       │   ├── security.py           # Security details + quotes
+│       │   ├── order.py              # Order, fills, validity types
+│       │   ├── portfolio.py          # Portfolio, holdings, transactions
+│       │   ├── price_history.py      # OHLCV price data
+│       │   ├── ml.py                 # ML models + predictions
+│       │   ├── sentiment.py          # Sentiment data
+│       │   ├── watchlist.py          # User watchlists
+│       │   ├── market.py             # Markets, exchanges
+│       │   ├── corporate_action.py   # Dividends, splits
+│       │   ├── group.py              # Permission groups
+│       │   ├── config.py             # System config
+│       │   ├── user_session.py       # Active sessions
+│       │   └── notification.py       # User notifications
+│       │
+│       ├── auth/                      # Auth module
+│       │   ├── router.py             # /api/v1/auth endpoints
+│       │   ├── service.py            # JWT create/verify, password hash
+│       │   └── dependencies.py       # get_current_user, require_role
+│       │
+│       ├── securities/                # Securities module
+│       │   ├── router.py             # /api/v1/securities endpoints
+│       │   └── service.py            # List, search, detail, history (yfinance)
+│       │
+│       ├── trading/                   # Trading module
+│       │   ├── router.py             # /api/v1/trading endpoints + WebSocket
+│       │   └── service.py            # Order execution, fill simulation
+│       │
+│       ├── portfolio/                 # Portfolio module
+│       │   ├── router.py             # /api/v1/portfolio endpoints
+│       │   └── service.py            # Holdings calc, P&L, transactions
+│       │
+│       ├── predictions/               # ML Predictions module
+│       │   ├── router.py             # /api/v1/predictions endpoints
+│       │   └── service.py            # Model inference, signal generation
+│       │
+│       ├── watchlists/                # Watchlist module
+│       │   ├── router.py             # /api/v1/watchlists endpoints
+│       │   └── service.py            # CRUD, price alerts
+│       │
+│       ├── notifications/             # Notifications module
+│       │   ├── router.py             # /api/v1/notifications endpoints
+│       │   └── service.py            # CRUD, mark read
+│       │
+│       ├── otp/                       # OTP module (Angular version)
+│       │   └── service.py            # Generate, verify, email delivery
+│       │
+│       ├── admin/                     # Admin module
+│       │   ├── router.py             # /api/v1/admin endpoints
+│       │   └── service.py            # User CRUD, roles, groups
+│       │
+│       ├── websocket/                 # WebSocket module
+│       │   └── manager.py            # Connection manager, broadcast
+│       │
+│       └── common/                    # Shared utilities
+│           ├── exceptions.py         # Custom HTTP exceptions
+│           └── middleware.py          # Logging, request timing
+│
+├── scripts/                            # Data seeding
+│   └── seed_data/                     # seed_nasdaq.py (25 stocks, 60 days)
+│
+├── docs/
+│   └── SCHEMA_DESIGN.md              # MongoDB schema documentation
+│
+├── docker/
+│   └── docker-compose.yml             # MongoDB 7 + Mongo Express (local dev)
+│
+└── deploy/                             # AWS EC2 deployment scripts
+  </pre>
+</div>
+
+<!-- ==================== SECTION 5: DATA MODEL ==================== -->
+<div class="section" id="s5">
+  <h1>05</h1>
+  <h2>Data Model Design</h2>
+
+  <p>All models use <strong>Beanie ODM</strong> (async MongoDB ODM for Python). MongoDB Atlas provides the persistence layer with 14 document collections.</p>
+
+  <h3>User</h3>
+  <div class="card">
+    <p>Core user entity with role-based access control and session tracking.</p>
+    <pre>
+User (Document):
+  email                 : str (unique, indexed)
+  username              : str (unique, indexed)
+  hashed_password       : str                        # bcrypt hash
+  full_name             : Optional[str]
+  role                  : UserRole                    # admin | trader | viewer
+  status                : UserStatus                  # active | suspended | pending
+
+  # Profile
+  avatar_url            : Optional[str]
+  phone                 : Optional[str]
+  timezone              : str = "UTC"
+
+  # Groups & Permissions
+  group_ids             : list[str]                   # Permission group references
+  permissions           : list[str]                   # Direct permission overrides
+
+  # Trading Profile
+  initial_balance       : Decimal = 100000.00         # Starting paper trading balance
+  current_balance       : Decimal                     # Updated on each trade
+
+  # Metadata
+  last_login_at         : Optional[datetime]
+  login_count           : int = 0
+  is_email_verified     : bool = False
+  created_at / updated_at : datetime
+
+Indexes: [email (unique)], [username (unique)], [role + status]</pre>
+  </div>
+
+  <h3>Security</h3>
+  <div class="card">
+    <p>Stock/security entity with real-time quote data and fundamental information.</p>
+    <pre>
+Security (Document):
+  symbol                : str (unique, indexed)       # e.g., "AAPL"
+  name                  : str                         # "Apple Inc."
+  exchange              : str                         # "NASDAQ"
+  sector                : Optional[str]               # "Technology"
+  industry              : Optional[str]               # "Consumer Electronics"
+
+  # Current Quote
+  current_price         : Decimal
+  previous_close        : Decimal
+  open_price            : Decimal
+  day_high              : Decimal
+  day_low               : Decimal
+  volume                : int
+  market_cap            : Optional[Decimal]
+
+  # Change
+  change_amount         : Decimal                     # current - previous_close
+  change_percent        : Decimal                     # (change / prev) * 100
+
+  # Fundamentals
+  pe_ratio              : Optional[Decimal]
+  eps                   : Optional[Decimal]
+  dividend_yield        : Optional[Decimal]
+  beta                  : Optional[Decimal]
+  fifty_two_week_high   : Optional[Decimal]
+  fifty_two_week_low    : Optional[Decimal]
+
+  # Risk
+  risk_level            : RiskLevel                   # low | moderate | high | very_high
+
+  # Status
+  is_active             : bool = True
+  last_quote_at         : datetime
+  created_at / updated_at : datetime
+
+Indexes: [symbol (unique)], [exchange + sector], [is_active]</pre>
+  </div>
+
+  <h3>Order</h3>
+  <div class="card">
+    <p>Trading order with full lifecycle tracking and fill history.</p>
+    <pre>
+Order (Document):
+  user_id               : str (indexed)
+  security_id           : str (indexed)
+  symbol                : str                         # Denormalized for display
+
+  # Order Details
+  side                  : OrderSide                   # buy | sell
+  order_type            : OrderType                   # market | limit | stop | stop_limit
+  quantity              : int
+  limit_price           : Optional[Decimal]           # For limit / stop_limit orders
+  stop_price            : Optional[Decimal]           # For stop / stop_limit orders
+
+  # Execution
+  status                : OrderStatus                 # pending | open | partially_filled | filled | cancelled | rejected
+  filled_quantity       : int = 0
+  average_fill_price    : Optional[Decimal]
+  total_value           : Optional[Decimal]           # filled_qty * avg_fill_price
+  commission            : Decimal = 0.00
+
+  # Validity
+  time_in_force         : TimeInForce                 # day | gtc | ioc | fok
+  expires_at            : Optional[datetime]
+
+  # Fills
+  fills                 : list[OrderFill]             # Embedded fill records
+    - fill_id, quantity, price, timestamp, fee
+
+  # Timestamps
+  submitted_at          : datetime
+  filled_at             : Optional[datetime]
+  cancelled_at          : Optional[datetime]
+  created_at / updated_at : datetime
+
+Indexes: [user_id + status], [user_id + security_id], [symbol + status]</pre>
+  </div>
+
+  <h3>Portfolio</h3>
+  <div class="card">
+    <pre>
+Portfolio (Document):
+  user_id               : str (unique, indexed)
+
+  # Summary
+  total_value           : Decimal                     # Sum of all holdings market value
+  total_cost_basis      : Decimal                     # Sum of all purchase costs
+  total_pnl             : Decimal                     # total_value - total_cost_basis
+  total_pnl_percent     : Decimal
+  day_pnl               : Decimal                     # Today's change
+  day_pnl_percent       : Decimal
+  cash_balance          : Decimal                     # Available cash
+
+  # Holdings
+  holdings              : list[Holding]               # Embedded holdings
+    - security_id, symbol, name
+    - quantity, avg_cost_basis
+    - current_price, market_value
+    - unrealized_pnl, unrealized_pnl_percent
+    - day_change, day_change_percent
+
+  last_calculated_at    : datetime
+  created_at / updated_at : datetime
+
+Indexes: [user_id (unique)]</pre>
+  </div>
+
+  <h3>PriceHistory</h3>
+  <div class="card">
+    <pre>
+PriceHistory (Document):
+  security_id           : str (indexed)
+  symbol                : str (indexed)
+  date                  : date (indexed)
+
+  # OHLCV Data
+  open                  : Decimal
+  high                  : Decimal
+  low                   : Decimal
+  close                 : Decimal
+  volume                : int
+  adjusted_close        : Optional[Decimal]
+
+  created_at            : datetime
+
+Indexes: [security_id + date (unique)], [symbol + date]</pre>
+  </div>
+
+  <h3>MLPrediction</h3>
+  <div class="card">
+    <pre>
+MLPrediction (Document):
+  security_id           : str (indexed)
+  symbol                : str
+  model_name            : str                         # "lstm_v2" | "random_forest_v1"
+  model_version         : str
+
+  # Prediction
+  signal                : TradingSignal               # strong_buy | buy | hold | sell | strong_sell
+  confidence            : float                       # 0.0 - 1.0
+  predicted_price       : Decimal                     # Next-day predicted price
+  predicted_change      : Decimal                     # Expected % change
+
+  # Risk Metrics
+  risk_score            : float                       # 0.0 - 1.0
+  volatility            : float                       # Historical volatility
+  sharpe_ratio          : Optional[float]
+  max_drawdown          : Optional[float]
+
+  # Time Horizon
+  horizon_days          : int = 1                     # Prediction window (1, 7, 30)
+  prediction_date       : date                        # Date prediction is for
+
+  # Metadata
+  features_used         : list[str]                   # Input features
+  training_data_range   : str                         # "2024-01-01 to 2026-03-25"
+
+  created_at            : datetime
+
+Indexes: [security_id + prediction_date], [signal + confidence]</pre>
+  </div>
+
+  <h3>Additional Models</h3>
+  <table>
+    <tr><th>Model</th><th>Purpose</th><th>Key Fields</th></tr>
+    <tr><td><strong>Watchlist</strong></td><td>User-curated security lists</td><td>user_id, name, security_ids, price_alerts[]</td></tr>
+    <tr><td><strong>Notification</strong></td><td>User notifications/alerts</td><td>user_id, type, title, message, is_read, action_url</td></tr>
+    <tr><td><strong>Sentiment</strong></td><td>Market sentiment data</td><td>security_id, source, score, article_count</td></tr>
+    <tr><td><strong>Market</strong></td><td>Exchange metadata</td><td>name, code, timezone, trading_hours, is_open</td></tr>
+    <tr><td><strong>CorporateAction</strong></td><td>Dividends, splits</td><td>security_id, type, ex_date, amount, ratio</td></tr>
+    <tr><td><strong>Group</strong></td><td>Permission groups</td><td>name, permissions[], user_ids[]</td></tr>
+    <tr><td><strong>Config</strong></td><td>System configuration</td><td>key, value, description, is_active</td></tr>
+    <tr><td><strong>UserSession</strong></td><td>Active login sessions</td><td>user_id, token_hash, device, ip, expires_at</td></tr>
+  </table>
+</div>
+
+<!-- ==================== SECTION 6: API DESIGN ==================== -->
+<div class="section" id="s6">
+  <h1>06</h1>
+  <h2>API Design</h2>
+
+  <p>All endpoints are versioned under <code>/api/v1/</code>. FastAPI provides auto-generated OpenAPI docs at <code>/docs</code>.</p>
+
+  <h3>Auth</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/auth/login</code></td><td>Authenticate with email/password, return JWT pair</td></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/auth/register</code></td><td>Create new user account</td></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/auth/refresh</code></td><td>Refresh access token using refresh token</td></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/auth/logout</code></td><td>Invalidate current session</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/auth/me</code></td><td>Get current authenticated user profile</td></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/auth/verify-otp</code></td><td>Verify 6-digit OTP code</td></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/auth/request-otp</code></td><td>Send OTP to user's email/phone</td></tr>
+  </table>
+
+  <h3>Securities</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/securities</code></td><td>List securities (paginated, filterable by sector/exchange)</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/securities/search?q={term}</code></td><td>Search by symbol or name</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/securities/{id}</code></td><td>Get security detail with fundamentals</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/securities/{id}/history</code></td><td>Price history (OHLCV, configurable range)</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/securities/top-movers</code></td><td>Top gainers and losers by % change</td></tr>
+  </table>
+
+  <h3>Trading</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/trading/orders</code></td><td>Place a new order (buy/sell)</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/trading/orders</code></td><td>List user's orders (filters: status, symbol, side)</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/trading/orders/{id}</code></td><td>Get order detail with fills and timeline</td></tr>
+    <tr><td><span class="tag tag-patch">PATCH</span></td><td><code>/api/v1/trading/orders/{id}/cancel</code></td><td>Cancel an open order</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/trading/orders/open</code></td><td>All currently open orders</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/trading/orders/history</code></td><td>Completed/cancelled order history</td></tr>
+  </table>
+
+  <h3>Portfolio</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/portfolio</code></td><td>Portfolio summary (total value, P&L, cash)</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/portfolio/holdings</code></td><td>All current holdings with market values</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/portfolio/holdings/{symbol}</code></td><td>Detail for specific holding</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/portfolio/transactions</code></td><td>Transaction history (paginated)</td></tr>
+  </table>
+
+  <h3>Predictions</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/predictions</code></td><td>All active predictions (signal grid)</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/predictions/{security_id}</code></td><td>Predictions for specific security</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/predictions/signals</code></td><td>Latest signals grouped by strength</td></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/predictions/risk-metrics</code></td><td>Risk analysis for portfolio securities</td></tr>
+  </table>
+
+  <h3>Watchlists</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/watchlists</code></td><td>List user's watchlists</td></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/watchlists</code></td><td>Create new watchlist</td></tr>
+    <tr><td><span class="tag tag-put">PUT</span></td><td><code>/api/v1/watchlists/{id}</code></td><td>Update watchlist (add/remove securities)</td></tr>
+    <tr><td><span class="tag tag-delete">DELETE</span></td><td><code>/api/v1/watchlists/{id}</code></td><td>Delete watchlist</td></tr>
+  </table>
+
+  <h3>Notifications</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/notifications</code></td><td>List notifications (unread count in header)</td></tr>
+    <tr><td><span class="tag tag-patch">PATCH</span></td><td><code>/api/v1/notifications/{id}/read</code></td><td>Mark notification as read</td></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/notifications/mark-all-read</code></td><td>Mark all notifications as read</td></tr>
+  </table>
+
+  <h3>Admin</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/admin/users</code></td><td>List all users (admin only)</td></tr>
+    <tr><td><span class="tag tag-post">POST</span></td><td><code>/api/v1/admin/users</code></td><td>Create user (admin)</td></tr>
+    <tr><td><span class="tag tag-put">PUT</span></td><td><code>/api/v1/admin/users/{id}</code></td><td>Update user details/role</td></tr>
+    <tr><td><span class="tag tag-delete">DELETE</span></td><td><code>/api/v1/admin/users/{id}</code></td><td>Delete user</td></tr>
+    <tr><td><span class="tag tag-patch">PATCH</span></td><td><code>/api/v1/admin/users/{id}/status</code></td><td>Change user status (activate/suspend)</td></tr>
+  </table>
+
+  <h3>WebSocket Endpoints</h3>
+  <table>
+    <tr><th>Endpoint</th><th>Purpose</th><th>Protocol</th></tr>
+    <tr><td><code>/ws/trading/{security_id}</code></td><td>Real-time price simulation with buy/sell signals for a security</td><td><span class="tag tag-ws">WS</span></td></tr>
+    <tr><td><code>/ws/portfolio/{user_id}</code></td><td>Real-time portfolio value updates as prices change</td><td><span class="tag tag-ws">WS</span></td></tr>
+  </table>
+
+  <h3>Health</h3>
+  <table>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td><span class="tag tag-get">GET</span></td><td><code>/api/v1/health</code></td><td>Server health + DB connectivity check</td></tr>
+  </table>
+</div>
+
+<!-- ==================== SECTION 7: REAL-TIME TRADING ENGINE ==================== -->
+<div class="section" id="s7">
+  <h1>07</h1>
+  <h2>Real-Time Trading Engine</h2>
+
+  <p>Gloria Trade simulates a live trading environment using WebSocket connections for real-time price streaming and order fill simulation.</p>
+
+  <h3>7.1 Price Simulation Pipeline</h3>
+  <div class="diagram">
+[Client connects to WebSocket]
+        |
+        v
+/ws/trading/{security_id}
+        |
+        v
+[WebSocket Connection Manager]
+  |-- Registers client to security channel
+  |-- Starts price simulation loop
+        |
+        v
+[Price Simulation Engine]                   Runs every 1-3 seconds
+  |
+  |-- Fetch last known price from MongoDB
+  |-- Apply random walk with drift:
+  |     new_price = price * (1 + drift + volatility * random_normal())
+  |-- Respect daily high/low bounds
+  |-- Generate OHLCV tick data
+        |
+        v
+[Broadcast to all subscribers]
+  {
+    "type": "price_update",
+    "symbol": "AAPL",
+    "price": 198.42,
+    "change": +2.31,
+    "change_percent": +1.18,
+    "volume": 45230,
+    "timestamp": "2026-03-27T14:30:00Z"
+  }
+        |
+        v
+[Order Matching Engine]                     Checks on each tick
+  |
+  |-- Scan open orders for this security
+  |-- Market orders: fill immediately at current price
+  |-- Limit orders: fill if price crosses limit
+  |-- Stop orders: trigger if price crosses stop
+  |-- Generate fill events:
+        {
+          "type": "order_fill",
+          "order_id": "...",
+          "fill_price": 198.42,
+          "fill_quantity": 100,
+          "status": "filled"
+        }
+  </div>
+
+  <h3>7.2 WebSocket Connection Manager</h3>
+  <div class="card">
+    <pre>
+class ConnectionManager:
+    """Manages WebSocket connections per security channel."""
+
+    active_connections: dict[str, list[WebSocket]]
+    # Key: security_id, Value: list of connected clients
+
+    Methods:
+      connect(security_id, websocket)     # Add client to channel
+      disconnect(security_id, websocket)  # Remove on close
+      broadcast(security_id, data)        # Send to all in channel
+      send_personal(websocket, data)      # Send to single client
+
+    Features:
+      - Auto-cleanup on disconnect
+      - Heartbeat ping/pong every 30s
+      - Auto-reconnect support (client-side)
+      - Channel-based isolation (per-security)</pre>
+  </div>
+
+  <h3>7.3 Order Lifecycle</h3>
+  <table>
+    <tr><th>Status</th><th>Trigger</th><th>Next States</th></tr>
+    <tr><td><span class="market-indicator mi-buy">pending</span></td><td>Order submitted by user</td><td>open, rejected</td></tr>
+    <tr><td><span class="market-indicator mi-buy">open</span></td><td>Order validated, awaiting fill</td><td>partially_filled, filled, cancelled</td></tr>
+    <tr><td><span class="market-indicator mi-buy">partially_filled</span></td><td>Some quantity filled</td><td>filled, cancelled</td></tr>
+    <tr><td><span class="market-indicator mi-buy">filled</span></td><td>All quantity filled</td><td>(terminal)</td></tr>
+    <tr><td><span class="market-indicator mi-sell">cancelled</span></td><td>User cancels or time expires</td><td>(terminal)</td></tr>
+    <tr><td><span class="market-indicator mi-sell">rejected</span></td><td>Insufficient funds / invalid</td><td>(terminal)</td></tr>
+  </table>
+</div>
+
+<!-- ==================== SECTION 8: ML PREDICTIONS PIPELINE ==================== -->
+<div class="section" id="s8">
+  <h1>08</h1>
+  <h2>ML Predictions Pipeline</h2>
+
+  <h3>8.1 Model Architecture</h3>
+  <div class="card-grid">
+    <div class="card-sm">
+      <h4>LSTM Price Predictor (PyTorch)</h4>
+      <ul>
+        <li>Input: 60-day OHLCV window + technical indicators</li>
+        <li>Architecture: 2-layer LSTM (128 hidden) + Dense</li>
+        <li>Output: Next-day price prediction</li>
+        <li>Training: Rolling 1-year window, retrain weekly</li>
+        <li>Features: SMA(20), EMA(12), RSI(14), MACD, Bollinger Bands</li>
+      </ul>
+    </div>
+    <div class="card-sm">
+      <h4>Random Forest Signal Generator (scikit-learn)</h4>
+      <ul>
+        <li>Input: 30 technical + fundamental features</li>
+        <li>Output: Signal classification (strong_buy to strong_sell)</li>
+        <li>Ensemble: 200 trees, max_depth=15</li>
+        <li>Features: P/E ratio, volume changes, moving averages, momentum indicators</li>
+        <li>Confidence: Probability from tree voting</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>8.2 Prediction Pipeline</h3>
+  <div class="diagram">
+[Scheduled Daily Trigger]                    Runs at market close (4:00 PM ET)
+        |
+        v
+[Fetch Latest Market Data]
+  |-- yfinance: OHLCV for all tracked securities
+  |-- Calculate technical indicators (SMA, EMA, RSI, MACD, BB)
+  |-- Fetch fundamental data (P/E, EPS, beta)
+        |
+        v
+[Feature Engineering]
+  |-- Normalize prices (MinMaxScaler per security)
+  |-- Create 60-day sliding windows (LSTM)
+  |-- Build feature matrix (Random Forest)
+  |-- Handle missing values (forward fill)
+        |
+        v
+[Model Inference] (run in parallel)
+  |
+  |-- LSTM Price Predictor:
+  |     Input:  [batch_size, 60, num_features] tensor
+  |     Output: [batch_size, 1] predicted prices
+  |
+  |-- Random Forest Classifier:
+  |     Input:  [num_securities, 30] feature matrix
+  |     Output: [num_securities] signal + confidence
+        |
+        v
+[Risk Analysis]
+  |-- Calculate portfolio volatility (SciPy)
+  |-- Compute Sharpe ratio per security
+  |-- Estimate max drawdown from historical data
+  |-- Generate risk_score (0-1) composite metric
+        |
+        v
+[Store MLPrediction Documents]               One per security per day
+        |
+        v
+[API serves via /api/v1/predictions]
+  </div>
+
+  <h3>8.3 Signal Grid (Frontend Display)</h3>
+  <div class="card">
+    <p>The Predictions page displays an interactive grid of all securities with their ML signals:</p>
+    <pre>
+Signal Grid Layout:
+┌──────────┬────────┬────────────┬──────────┬────────────┬───────────┐
+│ Symbol   │ Signal │ Confidence │ Pred ($) │ Risk Score │ Horizon   │
+├──────────┼────────┼────────────┼──────────┼────────────┼───────────┤
+│ AAPL     │ BUY    │ 87%        │ 201.50   │ 0.32 (Low) │ 1 Day     │
+│ TSLA     │ SELL   │ 72%        │ 168.30   │ 0.78 (High)│ 1 Day     │
+│ MSFT     │ HOLD   │ 65%        │ 433.00   │ 0.41 (Med) │ 1 Day     │
+│ NVDA     │ S.BUY  │ 91%        │ 910.20   │ 0.55 (Med) │ 1 Day     │
+└──────────┴────────┴────────────┴──────────┴────────────┴───────────┘
+
+Color coding:
+  STRONG BUY  → Bright green (#26A69A)
+  BUY         → Green
+  HOLD        → Yellow (#FFD740)
+  SELL        → Red (#EF5350)
+  STRONG SELL → Bright red</pre>
+  </div>
+</div>
+
+<!-- ==================== SECTION 9: AUTH & SECURITY ==================== -->
+<div class="section" id="s9">
+  <h1>09</h1>
+  <h2>Authentication & Security</h2>
+
+  <h3>9.1 JWT Token Flow</h3>
+  <div class="diagram">
+[User Login]
+  POST /api/v1/auth/login
+  Body: { email, password }
+        |
+        v
+[Server Validates]
+  |-- Find user by email
+  |-- Verify bcrypt hash: passlib.verify(password, hashed_password)
+  |-- Check user status == "active"
+        |
+        v
+[Generate Token Pair]
+  |-- Access Token:  JWT { user_id, role, exp: 15min }
+  |-- Refresh Token: JWT { user_id, type: "refresh", exp: 7days }
+  |-- Store session: UserSession { user_id, token_hash, device, ip }
+        |
+        v
+[Response]
+  {
+    "access_token": "eyJ...",
+    "refresh_token": "eyJ...",
+    "token_type": "bearer",
+    "expires_in": 900
+  }
+        |
+        v
+[Client stores in Zustand (React) / Signal (Angular)]
+  |-- authStore.setTokens(access, refresh)
+  |-- Persist to localStorage for page reload
+        |
+        v
+[Axios/HttpClient Interceptor]
+  |-- Request: Authorization: Bearer {access_token}
+  |-- Response 401: Auto-refresh using refresh_token
+  |-- Refresh fails: Redirect to /login
+  </div>
+
+  <h3>9.2 OTP Verification (Sensitive Operations)</h3>
+  <div class="card">
+    <p>Two-factor verification for high-risk actions in the Angular version.</p>
+    <pre>
+Triggers:
+  - First-time login from new device
+  - Password change
+  - Large trade orders (configurable threshold)
+  - Admin role actions
+
+Flow:
+  1. POST /api/v1/auth/request-otp → sends 6-digit code via email
+  2. OTP Document stored: { user_id, code (hashed), expires_at (5min) }
+  3. User enters code in OTP dialog
+  4. POST /api/v1/auth/verify-otp → validates, returns elevated session
+  5. Max 3 attempts, then new code required</pre>
+  </div>
+
+  <h3>9.3 Role-Based Access Control</h3>
+  <table>
+    <tr><th>Role</th><th>Securities</th><th>Trading</th><th>Portfolio</th><th>Predictions</th><th>Admin</th></tr>
+    <tr><td><strong>admin</strong></td><td>Full</td><td>Full</td><td>Full</td><td>Full</td><td>Full</td></tr>
+    <tr><td><strong>trader</strong></td><td>Read</td><td>Full</td><td>Own</td><td>Read</td><td>None</td></tr>
+    <tr><td><strong>viewer</strong></td><td>Read</td><td>None</td><td>View only</td><td>Read</td><td>None</td></tr>
+  </table>
+
+  <h3>9.4 Security Measures</h3>
+  <ul>
+    <li><strong>Password hashing:</strong> bcrypt via Passlib with automatic salt</li>
+    <li><strong>JWT signing:</strong> HS256 with configurable secret key</li>
+    <li><strong>CORS:</strong> Configurable allowed origins (dev: localhost:3000/4200, prod: domain)</li>
+    <li><strong>Rate limiting:</strong> Nginx-level rate limits on auth endpoints</li>
+    <li><strong>Input validation:</strong> Pydantic models validate all request bodies</li>
+    <li><strong>SQL injection:</strong> N/A (MongoDB + Beanie ODM with parameterized queries)</li>
+    <li><strong>XSS prevention:</strong> React auto-escapes, Angular sanitizes by default</li>
+  </ul>
+</div>
+
+<!-- ==================== SECTION 10: FRONTEND ARCHITECTURE ==================== -->
+<div class="section" id="s10">
+  <h1>10</h1>
+  <h2>Frontend Architecture</h2>
+
+  <h3>10.1 React Application Architecture</h3>
+  <div class="diagram">
+App.tsx (Theme Provider + React Router)
+├── AuthProvider (Zustand authStore)
+│   ├── /login           → LoginPage
+│   ├── /register        → RegisterPage
+│   └── ProtectedRoute (requires auth)
+│       ├── AppShell (Header + Sidebar + Content)
+│       │   ├── /dashboard       → DashboardPage
+│       │   ├── /securities      → SecuritiesListPage
+│       │   ├── /securities/:id  → SecurityDetailPage
+│       │   ├── /trading         → TradingPage
+│       │   ├── /portfolio       → PortfolioPage
+│       │   ├── /predictions     → PredictionsPage
+│       │   ├── /watchlists      → WatchlistPage
+│       │   ├── /notifications   → NotificationsPage
+│       │   └── /admin           → AdminPage (role: admin)
+│       └── Footer
+└── React Query Provider (API cache + background refetch)
+  </div>
+
+  <h3>10.2 State Management Strategy</h3>
+  <div class="card-grid">
+    <div class="card-sm">
+      <h4>Zustand (Client State)</h4>
+      <ul>
+        <li><strong>authStore:</strong> User profile, tokens, login/logout actions, persistence to localStorage</li>
+        <li><strong>themeStore:</strong> Dark/light mode toggle, MUI theme config</li>
+        <li>Lightweight, no boilerplate, React 19 compatible</li>
+        <li>Replaces Angular Signals in the migration</li>
+      </ul>
+    </div>
+    <div class="card-sm">
+      <h4>React Query (Server State)</h4>
+      <ul>
+        <li><strong>useSecurities:</strong> List, search, detail with stale-while-revalidate</li>
+        <li><strong>useTrading:</strong> Orders with optimistic updates on cancel</li>
+        <li><strong>usePortfolio:</strong> Holdings with auto-refetch every 30s</li>
+        <li>Cache keys: <code>['securities', filters]</code>, <code>['orders', status]</code></li>
+        <li>Replaces Angular HttpClient + manual caching</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>10.3 Component Library Mapping</h3>
+  <table>
+    <tr><th>Feature</th><th>Angular (Current)</th><th>React (Target)</th></tr>
+    <tr><td>UI Framework</td><td>Angular Material v19</td><td>MUI v6</td></tr>
+    <tr><td>Data Table</td><td><code>mat-table</code></td><td><code>&lt;DataGrid&gt;</code> (MUI X)</td></tr>
+    <tr><td>Forms</td><td>Reactive Forms + Template</td><td>React Hook Form</td></tr>
+    <tr><td>Dialogs</td><td><code>MatDialog</code></td><td><code>&lt;Dialog&gt;</code> (MUI)</td></tr>
+    <tr><td>Navigation</td><td><code>mat-sidenav</code></td><td><code>&lt;Drawer&gt;</code> (MUI)</td></tr>
+    <tr><td>Snackbar</td><td><code>MatSnackBar</code></td><td><code>&lt;Snackbar&gt;</code> (MUI)</td></tr>
+    <tr><td>Candlestick Chart</td><td>Lightweight Charts v5</td><td>Lightweight Charts v4</td></tr>
+    <tr><td>Analytics Charts</td><td>Chart.js</td><td>Recharts</td></tr>
+    <tr><td>Icons</td><td>Material Icons</td><td>MUI Icons</td></tr>
+    <tr><td>Loading</td><td>Custom spinner</td><td><code>&lt;CircularProgress&gt;</code></td></tr>
+  </table>
+
+  <h3>10.4 TradingView-Inspired Theme</h3>
+  <div class="card">
+    <pre>
+Theme Configuration (shared across both frontends):
+
+  Background:        #131722  (deep navy-black)
+  Card Background:   #1E222D  (slightly lighter)
+  Code/Input BG:     #161A25
+  Text Primary:      #D1D4DC
+  Text Secondary:    #787B86
+  Border:            #2A2E39
+
+  Accent Blue:       #2962FF  (primary actions, links)
+  Buy/Positive:      #26A69A  (green - profits, buy signals)
+  Sell/Negative:     #EF5350  (red - losses, sell signals)
+  Warning/Neutral:   #FFD740  (yellow - hold signals, alerts)
+
+  Font Family:       'Inter' (UI), 'JetBrains Mono' (prices/data)
+
+  Candlestick:
+    Up candle:   #26A69A (green body, green wick)
+    Down candle: #EF5350 (red body, red wick)
+    Grid:        #2A2E39
+    Crosshair:   #787B86</pre>
+  </div>
+</div>
+
+<!-- ==================== SECTION 11: MIGRATION STRATEGY ==================== -->
+<div class="section" id="s11">
+  <h1>11</h1>
+  <h2>Migration Strategy: Angular to React</h2>
+
+  <div class="alert alert-info">
+    <strong>Migration Status:</strong> A comprehensive migration analysis has been completed (see <code>gloria-trade-migration-app</code>). The Angular app scores 8/10 on migration readiness due to its clean module boundaries and loose coupling.
+  </div>
+
+  <h3>11.1 Pattern Conversion Map</h3>
+  <table>
+    <tr><th>Angular Pattern</th><th>React Equivalent</th><th>Notes</th></tr>
+    <tr><td>Angular Signals</td><td>Zustand stores</td><td>1:1 mapping, both are reactive</td></tr>
+    <tr><td>ApiService + HttpClient</td><td>Axios + React Query hooks</td><td>React Query adds caching for free</td></tr>
+    <tr><td><code>authInterceptor()</code></td><td>Axios request interceptor</td><td>Same JWT attachment logic</td></tr>
+    <tr><td>Lazy-loaded routes</td><td><code>React.lazy()</code> + Suspense</td><td>Code splitting per page</td></tr>
+    <tr><td>Angular Material components</td><td>MUI v6 components</td><td>Near 1:1 (see mapping above)</td></tr>
+    <tr><td>Template-driven forms</td><td>React Hook Form</td><td>Less boilerplate in React</td></tr>
+    <tr><td>RxJS debounce</td><td><code>useDeferredValue</code> / lodash</td><td>For search inputs</td></tr>
+    <tr><td>Functional guards</td><td><code>&lt;ProtectedRoute&gt;</code> component</td><td>HOC wrapping routes</td></tr>
+    <tr><td><code>@Injectable()</code> services</td><td>Custom hooks + Zustand</td><td>Hooks replace DI pattern</td></tr>
+    <tr><td>Standalone components</td><td>Regular React components</td><td>No module system needed</td></tr>
+  </table>
+
+  <h3>11.2 Migration Order</h3>
+  <div class="alert alert-success">
+    <strong>Strategy:</strong> Migrate bottom-up starting from the shared layer, then independent features, and finally pages that depend on multiple features.
+  </div>
+  <ol>
+    <li><strong>Shared Layer</strong> -- TypeScript types, API client (Axios), auth store (Zustand), theme config</li>
+    <li><strong>Securities</strong> -- Most complex standalone feature, no cross-feature dependencies</li>
+    <li><strong>Portfolio, Watchlist, Notifications, Predictions</strong> -- Can be migrated in parallel (independent features)</li>
+    <li><strong>Trading</strong> -- Depends on Securities + Portfolio</li>
+    <li><strong>Admin</strong> -- Standalone but lower priority</li>
+    <li><strong>Dashboard</strong> -- Migrated last as it composes widgets from all other features</li>
+    <li><strong>Layout / Shell</strong> -- AppShell, Header, Sidebar wrap around all features</li>
+  </ol>
+
+  <h3>11.3 Complexity Assessment</h3>
+  <table>
+    <tr><th>Feature</th><th>Angular Files</th><th>Complexity</th><th>Estimated Effort</th></tr>
+    <tr><td>Auth</td><td>8 files</td><td>Medium</td><td>OTP dialog + interceptor</td></tr>
+    <tr><td>Securities</td><td>12 files</td><td>High</td><td>Candlestick chart + filters</td></tr>
+    <tr><td>Trading</td><td>10 files</td><td>High</td><td>WebSocket + order forms</td></tr>
+    <tr><td>Portfolio</td><td>8 files</td><td>Medium</td><td>Tables + P&L calculations</td></tr>
+    <tr><td>Predictions</td><td>6 files</td><td>Low</td><td>Display grid only</td></tr>
+    <tr><td>Watchlist</td><td>5 files</td><td>Low</td><td>CRUD + alerts</td></tr>
+    <tr><td>Notifications</td><td>4 files</td><td>Low</td><td>List + mark read</td></tr>
+    <tr><td>Admin</td><td>6 files</td><td>Medium</td><td>User table + CRUD dialogs</td></tr>
+    <tr><td>Dashboard</td><td>8 files</td><td>Medium</td><td>Composed from all features</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>67 files</strong></td><td></td><td></td></tr>
+  </table>
+</div>
+
+<!-- ==================== SECTION 12: CI/CD ==================== -->
+<div class="section" id="s12">
+  <h1>12</h1>
+  <h2>CI/CD & Deployment Strategy</h2>
+
+  <h3>GitHub Actions Workflows</h3>
+
+  <div class="card">
+    <h4>Client Deployment (deploy-client.yml)</h4>
+    <pre>
+Trigger: push to main (changes in client/)
+Steps:
+  1. npm ci
+  2. tsc --noEmit (TypeScript typecheck)
+  3. npm run lint (ESLint)
+  4. npm run test (Vitest)
+  5. npm run build (Vite production build)
+  6. Deploy to Vercel / AWS S3 + CloudFront</pre>
+  </div>
+
+  <div class="card">
+    <h4>Server Deployment (deploy-server.yml)</h4>
+    <pre>
+Trigger: push to main (changes in server/)
+Steps:
+  1. Build Docker image (FastAPI + Uvicorn)
+  2. Run pytest (unit + integration tests)
+  3. Push image to Docker Hub / AWS ECR
+  4. SSH to EC2 instance
+  5. docker compose pull && docker compose up -d
+  6. Health check: curl /api/v1/health</pre>
+  </div>
+
+  <h3>Production Infrastructure</h3>
+  <div class="diagram">
+Production Environment
+├── AWS EC2 (t3.medium)                 # API server
+│   ├── FastAPI (Uvicorn + Gunicorn)    # --workers 4
+│   ├── Nginx (reverse proxy + SSL)     # Let's Encrypt cert
+│   └── Docker (container runtime)
+│
+├── MongoDB Atlas (M10 cluster)         # 3-node replica set
+│   ├── Auto-backups (daily)
+│   ├── Monitoring + alerts
+│   └── IP whitelist + TLS
+│
+├── Vercel / CloudFront                 # React SPA hosting
+│   ├── Automatic HTTPS
+│   ├── Global CDN edge caching
+│   └── Preview deployments per PR
+│
+├── yfinance API                        # Market data (free tier)
+│
+├── Mongo Express (dev only)            # DB admin UI at :8081
+│
+└── Monitoring
+    ├── Sentry (error tracking)
+    ├── CloudWatch (server metrics)
+    └── MongoDB Atlas monitoring
+  </div>
+
+  <h3>Docker Compose (Local Development)</h3>
+  <div class="card">
+    <pre>
+services:
+  mongodb:
+    image: mongo:7
+    ports: 27017:27017
+    volumes: mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: gloria_trade
+
+  mongo-express:
+    image: mongo-express
+    ports: 8081:8081
+    depends_on: mongodb
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+
+  # Client and server run natively for hot-reload:
+  # client: npm run dev (port 3000, proxy to :9000)
+  # server: uvicorn app.main:app --reload --port 9000</pre>
+  </div>
+</div>
+
+<!-- ==================== SECTION 13: PREREQUISITES ==================== -->
+<div class="section" id="s13">
+  <h1>13</h1>
+  <h2>Prerequisites for Deployment</h2>
+
+  <h3>Accounts & Services Required</h3>
+  <table>
+    <tr><th>#</th><th>Service</th><th>Purpose</th><th>Cost</th></tr>
+    <tr><td>1</td><td>AWS Account</td><td>EC2 (API), S3 (static assets), CloudFront (CDN)</td><td>~$30-60/mo (t3.medium)</td></tr>
+    <tr><td>2</td><td>MongoDB Atlas</td><td>M10 cluster for production data</td><td>~$57/mo (M10 dedicated)</td></tr>
+    <tr><td>3</td><td>GitHub Account</td><td>Repository + Actions CI/CD</td><td>Free (public) / $4/mo (private)</td></tr>
+    <tr><td>4</td><td>Vercel Account</td><td>React SPA hosting + preview deploys</td><td>Free tier (then $20/mo Pro)</td></tr>
+    <tr><td>5</td><td>Domain Name</td><td>e.g., gloria-trade.com</td><td>~$12/year</td></tr>
+    <tr><td>6</td><td>Sentry Account</td><td>Error tracking (frontend + backend)</td><td>Free tier (5K events/mo)</td></tr>
+    <tr><td>7</td><td>Email Service</td><td>OTP delivery (SendGrid / SES)</td><td>Free tier (~100 emails/day)</td></tr>
+  </table>
+
+  <div class="alert alert-warning">
+    <strong>Estimated initial monthly cost:</strong> ~$100-140/month for infrastructure. Scales with user growth via MongoDB Atlas tier upgrades and EC2 instance sizing.
+  </div>
+
+  <h3>Development Environment</h3>
+  <table>
+    <tr><th>Tool</th><th>Version</th><th>Purpose</th></tr>
+    <tr><td>Node.js</td><td>20+ (via nvm)</td><td>React frontend build + dev</td></tr>
+    <tr><td>Python</td><td>3.12+ (via pyenv)</td><td>FastAPI backend</td></tr>
+    <tr><td>Docker Desktop</td><td>Latest</td><td>MongoDB 7 local dev</td></tr>
+    <tr><td>VS Code</td><td>Latest</td><td>Primary IDE (ESLint, Prettier, Python extensions)</td></tr>
+    <tr><td>MongoDB Compass</td><td>Latest</td><td>GUI for database inspection</td></tr>
+    <tr><td>Postman / Thunder Client</td><td>Latest</td><td>API testing</td></tr>
+  </table>
+
+  <h3>Environment Variables (Server)</h3>
+  <pre>
+# MongoDB
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/
+MONGODB_DB_NAME=gloria_trade
+
+# JWT
+JWT_SECRET_KEY=&lt;generate-secure-256-bit-key&gt;
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15
+JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# CORS
+CORS_ORIGINS=["http://localhost:3000","http://localhost:4200"]
+
+# Email (OTP)
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASSWORD=SG.xxx
+
+# Server
+HOST=0.0.0.0
+PORT=9000
+ENVIRONMENT=development  # development | staging | production</pre>
+
+  <h3>Seed Data</h3>
+  <div class="card">
+    <p>The seed script populates the database with realistic NASDAQ data for development and demo purposes:</p>
+    <pre>
+python scripts/seed_nasdaq.py
+
+Seeds:
+  - 25 NASDAQ securities (AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA, ...)
+  - 60 days of OHLCV price history per security (via yfinance)
+  - Fundamental data (P/E, EPS, market cap, beta)
+  - 3 demo users (admin, trader, viewer)
+  - Sample watchlist with 5 securities
+  - Sample ML predictions for each security</pre>
+  </div>
+</div>
+
+<!-- ==================== SECTION 14: ROADMAP ==================== -->
+<div class="section" id="s14">
+  <h1>14</h1>
+  <h2>Implementation Roadmap</h2>
+
+  <div class="phase">
+    <div class="phase-num">1</div>
+    <div class="phase-content">
+      <div class="phase-title">Foundation & Shared Layer</div>
+      <div class="phase-time">Weeks 1-2</div>
+      <ul>
+        <li>Set up React 19 + Vite project with TypeScript strict mode</li>
+        <li>Configure MUI v6 theme (TradingView dark palette)</li>
+        <li>Set up Zustand stores (authStore, themeStore)</li>
+        <li>Build Axios client with JWT interceptor (token attach + auto-refresh)</li>
+        <li>Define all TypeScript interfaces (auth, security, trading, portfolio types)</li>
+        <li>Configure React Router v7 with lazy routes and ProtectedRoute</li>
+        <li>Docker compose for MongoDB 7 local dev</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">2</div>
+    <div class="phase-content">
+      <div class="phase-title">Auth & Layout Shell</div>
+      <div class="phase-time">Weeks 3-4</div>
+      <ul>
+        <li>Login page with React Hook Form + MUI inputs</li>
+        <li>Register page with validation</li>
+        <li>AppShell component: responsive Header + collapsible Sidebar + content area</li>
+        <li>Navigation with active route highlighting</li>
+        <li>User avatar + theme toggle in header</li>
+        <li>Auth flow: login -> store tokens -> redirect to dashboard</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">3</div>
+    <div class="phase-content">
+      <div class="phase-title">Securities & Charts</div>
+      <div class="phase-time">Weeks 5-7</div>
+      <ul>
+        <li>Securities list page: paginated MUI DataGrid with search + sector filters</li>
+        <li>Security detail page: fundamentals card, risk badge, key stats</li>
+        <li>Interactive candlestick chart (Lightweight Charts v4) with zoom + crosshair</li>
+        <li>Price history range selector (1D, 1W, 1M, 3M, 1Y)</li>
+        <li>Top movers widget (gainers/losers by % change)</li>
+        <li>React Query hooks with stale-while-revalidate caching</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">4</div>
+    <div class="phase-content">
+      <div class="phase-title">Trading & WebSocket</div>
+      <div class="phase-time">Weeks 8-10</div>
+      <ul>
+        <li>Order placement form: side (buy/sell), type (market/limit), quantity, limit price</li>
+        <li>WebSocket integration for real-time price streaming</li>
+        <li>Open orders panel with live status updates</li>
+        <li>Order history table with filters (status, symbol, date range)</li>
+        <li>Order detail page with fill timeline and financial breakdown</li>
+        <li>Order cancellation with optimistic UI update</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">5</div>
+    <div class="phase-content">
+      <div class="phase-title">Portfolio & Predictions</div>
+      <div class="phase-time">Weeks 11-13</div>
+      <ul>
+        <li>Portfolio summary cards (total value, P&L, day change, cash balance)</li>
+        <li>Holdings table with real-time market values and unrealized P&L</li>
+        <li>Transaction history (paginated, filterable by symbol/type)</li>
+        <li>ML predictions signal grid (color-coded buy/hold/sell)</li>
+        <li>Risk metrics dashboard (volatility, Sharpe, drawdown)</li>
+        <li>Price forecast display with confidence intervals</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">6</div>
+    <div class="phase-content">
+      <div class="phase-title">Watchlist, Notifications & Admin</div>
+      <div class="phase-time">Weeks 14-15</div>
+      <ul>
+        <li>Watchlist CRUD with drag-and-drop reordering</li>
+        <li>Price alert configuration per watchlist security</li>
+        <li>Notifications page with unread count badge in header</li>
+        <li>Mark read/unread, mark all read</li>
+        <li>Admin user management table with role/status CRUD</li>
+        <li>Admin user creation dialog with welcome email trigger</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-num">7</div>
+    <div class="phase-content">
+      <div class="phase-title">Dashboard, Polish & Launch</div>
+      <div class="phase-time">Weeks 16-18</div>
+      <ul>
+        <li>Dashboard page composing widgets from all features</li>
+        <li>Summary cards: portfolio value, day P&L, open orders count</li>
+        <li>Recent orders feed, top securities, quick-action buttons</li>
+        <li>Performance optimization: code splitting, lazy loading, bundle analysis</li>
+        <li>Accessibility audit (keyboard nav, ARIA labels, color contrast)</li>
+        <li>Production deployment: Vercel (client) + EC2 (server) + Atlas (DB)</li>
+        <li>Monitoring setup: Sentry + CloudWatch + health check alerts</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 15: KEY DECISIONS ==================== -->
+<div class="section" id="s15">
+  <h1>15</h1>
+  <h2>Key Architectural Decisions</h2>
+
+  <table>
+    <tr><th>Decision</th><th>Choice</th><th>Rationale</th></tr>
+    <tr>
+      <td>Primary Frontend</td>
+      <td>React 19 + Vite</td>
+      <td>Larger ecosystem, easier hiring, better DX with hooks. Angular version serves as production reference during migration.</td>
+    </tr>
+    <tr>
+      <td>State Management</td>
+      <td>Zustand + React Query</td>
+      <td>Zustand for client state (auth, theme) is minimal and fast. React Query for server state adds automatic caching, background refetch, and optimistic updates without boilerplate.</td>
+    </tr>
+    <tr>
+      <td>UI Library</td>
+      <td>MUI v6</td>
+      <td>Closest Material Design mapping to Angular Material. Comprehensive component set (DataGrid, Dialog, Drawer) covers all trading UI needs.</td>
+    </tr>
+    <tr>
+      <td>Charting</td>
+      <td>Lightweight Charts (TradingView)</td>
+      <td>Purpose-built for financial data. Candlestick, volume, technical indicators out of the box. Same library used in Angular version.</td>
+    </tr>
+    <tr>
+      <td>Database</td>
+      <td>MongoDB Atlas</td>
+      <td>Flexible document schema suits diverse models (users, orders, predictions). Beanie ODM provides Pythonic async access. Atlas handles backups, scaling, monitoring.</td>
+    </tr>
+    <tr>
+      <td>Backend Framework</td>
+      <td>FastAPI</td>
+      <td>Async-first, auto-generates OpenAPI docs, Pydantic validation, native WebSocket support. Perfect for real-time trading data.</td>
+    </tr>
+    <tr>
+      <td>ML Framework</td>
+      <td>PyTorch + scikit-learn</td>
+      <td>PyTorch for LSTM time series models, scikit-learn for ensemble classifiers. Both run in-process (no separate ML service needed at current scale).</td>
+    </tr>
+    <tr>
+      <td>Real-Time Protocol</td>
+      <td>WebSocket (FastAPI native)</td>
+      <td>Lower latency than polling for price streaming. Built into FastAPI, no external broker needed. Channel-based isolation per security.</td>
+    </tr>
+    <tr>
+      <td>Auth Strategy</td>
+      <td>JWT (access + refresh) + OTP</td>
+      <td>Stateless access tokens for API calls. Refresh tokens for seamless re-auth. OTP adds security for sensitive operations without a third-party auth provider.</td>
+    </tr>
+    <tr>
+      <td>Market Data</td>
+      <td>yfinance (free)</td>
+      <td>Sufficient for development and demo with NASDAQ data. Can upgrade to paid APIs (Alpha Vantage, Polygon.io) for production real-time data.</td>
+    </tr>
+    <tr>
+      <td>Backend Pattern</td>
+      <td>Modular monolith</td>
+      <td>All modules (auth, trading, portfolio, etc.) in one FastAPI app with separate routers. Clean boundaries allow microservice extraction if needed.</td>
+    </tr>
+    <tr>
+      <td>Migration Approach</td>
+      <td>Bottom-up, feature-by-feature</td>
+      <td>Shared layer first, then independent features in parallel, then composed pages. Backend stays unchanged -- only the frontend is migrated.</td>
+    </tr>
+  </table>
+
+  <div class="alert alert-info" style="margin-top: 30px;">
+    <strong>This is a living document.</strong> Architecture decisions will be revisited as the migration progresses and the React application matures. Each phase completion triggers a review to validate assumptions and adjust course.
+  </div>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<div style="padding: 40px 0; text-align: center; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--border);">
+  <p><strong>Gloria Trade Architecture Plan v1.0</strong> | March 2026 | Confidential</p>
+  <p>This document serves as the foundation for development. Update iteratively as decisions are finalized.</p>
+</div>
+
+</div><!-- end container -->
+</body>
+</html>
